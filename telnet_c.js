@@ -3,7 +3,6 @@ var fs = require('fs');
 var parser = require('body-parser');
 var telnet_client = require('telnet-client');
 
-var connection = new telnet_client();
 var app = express();
 app.use(parser.urlencoded({ extended: false }));
 
@@ -112,6 +111,7 @@ app.use(express.static('./appl/telnet_client/www'));
 // receive info 
 //////////////////////////////////////////////////////////////////////////////////////////////
 app.post('/telnet', function (request, response) {
+   var connection = new telnet_client();	 
    if ( request.body.model == 'mes3528' || request.body.model == 'xgs4728' ) {                                  // case 1 - ZyXel
       var params = {
                     "host": request.body.ip,
