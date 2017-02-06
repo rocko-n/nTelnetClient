@@ -103,13 +103,13 @@ app.use(express.static('./appl/telnet_client/www'));
 //////////////////////////////////////////////////////////////////////////////////////////////
 app.post('/telnet', function (request, response) {
    var connection = new telnet_client();	
-   var cmd = formCmd(request.body.model, request.body.cmd, request.body.port, request.body.vid); 	
-   if ( request.body.model == 'mes3528' || request.body.model == 'xgs4728' ) {                                  // case 1 - ZyXel
-      var params = {
+   var cmd = formCmd(request.body.model, request.body.cmd, request.body.port, request.body.vid); 
+   var params = {
                     "host": request.body.ip,
                     "port": 23,
                     "timeout":  4000
-                   };
+                }; 
+   if ( request.body.model == 'mes3528' || request.body.model == 'xgs4728' ) {                                  // case 1 - ZyXel
       connection.connect(params); 
       connection.send('admin\npassword\n' + cmd + '\n\nlogout\n')
           .then( function(res) {
@@ -131,11 +131,6 @@ app.post('/telnet', function (request, response) {
       });
    } else
    if ( request.body.model != 'mes3528' && request.body.model != 'xgs4728' && request.body.model != 'ecs3510' ) {  // case 2 - D-Link
-      var params = {
-                    "host": request.body.ip,
-                    "port": 23,
-                    "timeout":  4000
-                   };
       connection.connect(params);
       connection.send('admin\r\npassword\r\n' + cmd + '\r\na\r\nlogout\r\n')
           .then(function(res) {
@@ -153,11 +148,6 @@ app.post('/telnet', function (request, response) {
       });
    } else
    if ( request.body.model == 'ecs3510' ) {                                                                 // case 3 - EdgECorE
-      var params = {
-                    "host": request.body.ip,
-                    "port": 23,
-                    "timeout":  6000
-                   };
       connection.connect(params); 
       if ( request.body.cmd != 'cable test' ) {
          connection.exec('admin\npassword\n' + cmd + '\na\n\nquit\n')
