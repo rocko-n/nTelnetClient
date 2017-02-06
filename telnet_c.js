@@ -7,7 +7,7 @@ var app = express();
 app.use(parser.urlencoded({ extended: false }));
 
 
-function formCmd(model, cmd, port, vid) {
+function formCmd(model, cmd, port, vid) {                                     // cmd-constructor
    var globCmds = { des3200: {
                             'show mac': 'show fdb port ' + port,
                             'show errors': 'show error ports ' + port,
@@ -99,7 +99,7 @@ app.use(express.static('./appl/telnet_client/www'));
 
 
 
-// receive info 
+// telnet 
 //////////////////////////////////////////////////////////////////////////////////////////////
 app.post('/telnet', function (request, response) {
    var connection = new telnet_client();	
