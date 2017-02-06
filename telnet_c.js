@@ -93,15 +93,6 @@ function formCmd(model, cmd, port, vid) {
 }
 
 
-	    
-	
-
-
-
-
-
-
-
 //Server
 //////////////////////////////////////////////////////////////////////////////////////////////
 app.use(express.static('./appl/telnet_client/www'));
@@ -111,15 +102,15 @@ app.use(express.static('./appl/telnet_client/www'));
 // receive info 
 //////////////////////////////////////////////////////////////////////////////////////////////
 app.post('/telnet', function (request, response) {
-   var connection = new telnet_client();	 
+   var connection = new telnet_client();	
+   var cmd = formCmd(request.body.model, request.body.cmd, request.body.port, request.body.vid); 	
    if ( request.body.model == 'mes3528' || request.body.model == 'xgs4728' ) {                                  // case 1 - ZyXel
       var params = {
                     "host": request.body.ip,
                     "port": 23,
                     "timeout":  4000
                    };
-      connection.connect(params);
-      var cmd = formCmd(request.body.model, request.body.cmd, request.body.port, request.body.vid);  
+      connection.connect(params); 
       connection.send('admin\npassword\n' + cmd + '\n\nlogout\n')
           .then( function(res) {
             if ( request.body.cmd != 'port disable' && request.body.cmd != 'port enable' ) {
@@ -146,7 +137,6 @@ app.post('/telnet', function (request, response) {
                     "timeout":  4000
                    };
       connection.connect(params);
-      var cmd = formCmd(request.body.model, request.body.cmd, request.body.port, request.body.vid);  
       connection.send('admin\r\npassword\r\n' + cmd + '\r\na\r\nlogout\r\n')
           .then(function(res) {
             var reg = new RegExp(cmd);
@@ -168,8 +158,7 @@ app.post('/telnet', function (request, response) {
                     "port": 23,
                     "timeout":  6000
                    };
-      connection.connect(params);
-      var cmd = formCmd(request.body.model, request.body.cmd, request.body.port, request.body.vid);  
+      connection.connect(params); 
       if ( request.body.cmd != 'cable test' ) {
          connection.exec('admin\npassword\n' + cmd + '\na\n\nquit\n')
              .then( function(res) {
