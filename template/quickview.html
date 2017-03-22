@@ -8,26 +8,11 @@
   </head>
   <body>
     <form>
-      <div><text style="position:absolute; left: 0%;">Введите ip коммутатора:</text>
-         <input id="ip" type='text' style="position:absolute; left: 30%;" maxlength="15" size="15" pattern="172\.\d{2}\.\d{1,3}\.\d{1,3}" required> 
-      </div>
-      <br/>
-      <br/>
-      <div><text style="position:absolute; left: 0%;">Выбирите модель коммутатора:</text> 
-         <select id="model" style="position:absolute; left: 30%;">
-               <option value="des3200">DES-3200/1228-10/18/26/28/28F</option>
-               <option value="mes3528">MES/ES-3528/3500-24/3124/2108</option>
-               <option value="ecs3510">ECS-3510-28T</option>
-               <option value="des3526">DES-3526</option>
-               <option value="des1210">DES-1210-28</option>
-               <option value="dgs3100">DGS-3100-24TG</option>
-               <option value="dgs3120">DGS-3120-24SC/3140</option>
-               <option value="xgs4728">XGS-4728F/GS-3012</option>
-         </select>
-      </div>
-      <br/>
-      <br/>
-      <div><text style="position:absolute; left: 0%;">Выберите действие:</text>
+         <input id="ip" type="hidden" style="position:absolute; left: 30%;" maxlength="15" size="15" value="#ip#" required> 
+         <input id="model" type="hidden" style="position:absolute; left: 30%;" maxlength="15" size="15" value="#model#" required>
+      <div>
+         <text style="color:green; position:absolute; right: 1%;">#ip#</text> 
+         <text style="position:absolute; left: 0%;">Выберите действие:</text>
          <select id="cmd" style="position:absolute; left: 30%;">
                <option value="show mac">show mac</option>
                <option value="show errors">show errors</option>
@@ -45,7 +30,8 @@
       </div> 
       <br/>
       <br/>
-      <div id="port"><text style="position:absolute; left: 0%;">Укажите порт:</text>  
+      <div id="port">
+         <text style="position:absolute; left: 0%;">Укажите порт:</text>  
          <select id="selport" style="position:absolute; left: 30%;">
                <option value="1">1</option>
                <option value="2">2</option>
@@ -77,17 +63,17 @@
                <option value="28">28</option>        
          </select>
       </div>
-      <div id="vid" style="display: none;"><text style="position:absolute; left: 0%;">Укажите VID:</text> 
+      <div id="vid" style="display: none;">
+         <text style="position:absolute; left: 0%;">Укажите VID:</text> 
          <input type="text" id="invid" style="position:absolute; left: 30%;" min="1" max="4096" maxlength="4" size="4" pattern="\d{1,4}">
       </div>
-      <div id="macdiv" style="display: none;"><text style="position:absolute; left: 0%;">Укажите MAC:</text> 
+      <div id="macdiv" style="display: none;">
+         <text style="position:absolute; left: 0%;">Укажите MAC:</text> 
          <input type="text" id="mac" style="position:absolute; left: 30%;" maxlength="17" size="15" pattern="[\da-fA-F]{2}[-:][\da-fA-F]{2}[-:][\da-fA-F]{2}[-:][\da-fA-F]{2}[-:][\da-fA-F]{2}[-:][\da-fA-F]{2}">
       </div>                                                                            
       <br/>
-      <br/>
       <button id="send" style="position:absolute; left: 46%;"><text>Submit</text></button> 
     </form>
-      <br/>
       <br/>
       <hr> 
       <div><text style="position:absolute; left: 47%;">Ответ</text>
