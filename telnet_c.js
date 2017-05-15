@@ -4,6 +4,9 @@ var parser = require('body-parser');
 var telnet_client = require('telnet-client');
 var app = express();
 app.use(parser.urlencoded({ extended: false }));
+
+var telnetLogin = 'admin';
+var telnetPassword = 'test';
 /**
  * cmd-constructor
  * @param {String} model
@@ -143,7 +146,7 @@ function formCmd(model, cmd, port, vid, mac) {
             }
         };
     /**check if model and cmd is supported*/
-    if ( globCmds.hasOwnProperty(model) && globCmds[model].hasOwnProperty(cmd) ) {
+    if (globCmds.hasOwnProperty(model) && globCmds[model].hasOwnProperty(cmd)) {
         return globCmds[model][cmd];
     } else return 'unsupported';
 }
@@ -214,41 +217,46 @@ function modelTranslator(fullModel) {
         'Edge-corE ES3510MA': 'ecs3510',
         'Edge-corE ES4626-SFP': 'ecs3510'
         };
-    if ( globModel.hasOwnProperty(fullModel) ) {
+    if (globModel.hasOwnProperty(fullModel)) {
         return globModel[fullModel];
     } else return fullModel;
 }
+
 /**FullView*/
 app.use(express.static(__dirname + '/www'));
+
 /**QuickView, for billing monitoring system*/
-app.get(/^\/([\d.]+)\/([\w\-%]+)/, function (req, res) {
+app.get(/^\/([\d.]+)\/([\w\-%]+)/, function(req, res) {
     res.send(fs.readFileSync(__dirname + '/template/quickview.html').toString().replace(/#ip#/g, '' + req.params[0] + '').replace('#model#', '' + modelTranslator(req.params[1]) + ''));
 });
+
 /**Telnet*/
-app.post('/telnet', function (request, response) {
+app.post('/telnet', function(request, response) {
     var connection = new telnet_client();
     console.log(new Date + 2, request.body);
     var cmd = formCmd(request.body.model, request.body.cmd, request.body.port, request.body.vid, request.body.mac);
     /**Check if model or cmd is supported*/
-    if ( cmd === 'unsupported' ) {
+    if (cmd === 'unsupported') {
         response.send('unsupported data');
         return;
     }
+
     var params = {
         "host": request.body.ip,
         "port": 23,
         "timeout":  11500,
         "execTimeout": 12000
         };
+
     switch (request.body.model) {
         /**Case 1 - ZyXEL*/
         case 'mes3528':
         case 'mes3500':
         case 'xgs4728':
-            if ( request.body.cmd === 'cable test' && request.body.model === 'mes3500' ) {
+            if (request.body.cmd === 'cable test' && request.body.model === 'mes3500') {
                 params.sendTimeout = 4000;
                 connection.connect(params);
-                connection.send('admin\npassword\n' + cmd + '\n\n')
+                connection.send('' + telnetLogin + '\n' + telnetPassword + '\n' + cmd + '\n\n')
                     .then(function(res) {
                         var reg = new RegExp(cmd.replace(/\s/g, '&nbsp;'));
                         var newRes = res.replace(/7/g, '').replace(/[\r\n]/g, '<br>').replace(/\s/g, '&nbsp;');
@@ -268,17 +276,21 @@ app.post('/telnet', function (request, response) {
                 });
                 return;
             }
+
             connection.connect(params);
-            connection.exec('admin\npassword\n' + cmd + '\n\n')
-                .then (function(res1) {
+
+            connection.exec('' + telnetLogin + '\n' + telnetPassword + '\n' + cmd + '\n\n')
+                .then(function(res1) {
                     connection.exec('\n\n')
                         .then(function(res2) {
                             var res = res1 + res2;
-                            if ( request.body.cmd !== 'port disable' && request.body.cmd !== 'port enable' ) {
+
+                            if (request.body.cmd !== 'port disable' && request.body.cmd !== 'port enable') {
                                 var reg = new RegExp(cmd.replace(/\s/g, '&nbsp;'));
                             } else {
                                 reg = new RegExp('interface&nbsp;port-channel');
-                            };
+                            }
+
                             var newRes = res.replace(/7/g, '').replace(/[\r\n]/g, '<br>').replace(/\s/g, '&nbsp;');
                             newRes = newRes.slice(newRes.search(reg));
                             response.send(newRes);
@@ -287,10 +299,12 @@ app.post('/telnet', function (request, response) {
                             console.log('destroying');
                         });
                 });
+
             connection.on('error', function() {
                 response.send('host unreachable');
                 console.log('host unreachable');
             });
+
             connection.on('timeout', function() {
                 response.send('response timeout');
                 console.log('response timeout');
@@ -302,30 +316,35 @@ app.post('/telnet', function (request, response) {
         case 'des1210':
         case 'dgs3100':
         case 'dgs3120':
-            if ( request.body.cmd === 'show log' || request.body.model === 'dgs3100' ) {
+            if (request.body.cmd === 'show log' || request.body.model === 'dgs3100' || (request.body.cmd === 'cable test' && request.body.port > 24)) {
                 params.sendTimeout = 5000;
             } else {
                 params.sendTimeout = 1000;
-            };
+            }
+
             connection.connect(params);
-            connection.send('admin\r\npassword\r\n' + cmd + '\r\na\r\n')
+
+            connection.send('' + telnetLogin +  '\r\n' + telnetPassword + '\r\n' + cmd + '\r\na\r\n')
                 .then(function(res) {
-                    if ( cmd === 'save\r\ny' ) {
+                    if (cmd === 'save\r\ny') {
                         var reg = new RegExp('save');
                     } else {
                         reg = new RegExp(cmd.replace(/\s/g, '&nbsp;'));
-                    };
+                    }
+
                     var newRes = res.replace(/\n/g, '<br>').replace(/\[[^<]*/g, '').replace(/\s/g, '&nbsp;');
-                    newRes = newRes.slice( newRes.search(reg), (newRes.search(/#(&nbsp;)?a/)<0?newRes.length:newRes.search(/#(&nbsp;)?a/)) );
+                    newRes = newRes.slice(newRes.search(reg), (newRes.search(/#(&nbsp;)?a/)<0?newRes.length:newRes.search(/#(&nbsp;)?a/)));
                     response.send(newRes);
                     console.log('response sent');
                     connection.destroy();
                     console.log('destroying');
                 });
+
             connection.on('error', function() {
                 response.send('host unreachable');
                 console.log('host unreachable');
             });
+
             connection.on('timeout', function() {
                 response.send('response timeout');
                 console.log('response timeout');
@@ -334,49 +353,55 @@ app.post('/telnet', function (request, response) {
         /**Case 3 - EdgECorE*/
         case 'ecs3510':
             connection.connect(params);
-            if ( request.body.cmd !== 'cable test' ) {
-                connection.exec('admin\npassword\n' + cmd + '\na\n\n')
-                    .then( function(res) {
-                        if ( request.body.cmd !== 'port disable' && request.body.cmd !== 'port enable' ) {
+
+            if (request.body.cmd !== 'cable test') {
+                connection.exec('' + telnetLogin + '\n' + telnetPassword + '\n' + cmd + '\na\n\n')
+                    .then(function(res) {
+                        if (request.body.cmd !== 'port disable' && request.body.cmd !== 'port enable') {
                             var reg = new RegExp(cmd.replace(/\s/g, '&nbsp;'));
                         } else {
                             reg = new RegExp('interface&nbsp;ethernet');
                         }
+
                         var newRes = res.replace(/\n/g, '<br>').replace(/\s/g, '&nbsp;');
-                        newRes = newRes.slice( newRes.search(reg), (newRes.search(/#a/)<0?newRes.length:newRes.search(/#a/)) );
-                        if ( request.body.cmd === 'save changes' ) {
+                        newRes = newRes.slice(newRes.search(reg), (newRes.search(/#a/)<0?newRes.length:newRes.search(/#a/)));
+
+                        if (request.body.cmd === 'save changes') {
                             response.send('Success');
                             console.log('response sent');
                             connection.destroy();
                             console.log('destroying');
                             return;
-                        };
+                        }
+
                         response.send(newRes);
                         console.log('response sent');
                         connection.destroy();
                         console.log('destroying');
                     });
             } else {
-                connection.exec('admin\npasswprd\n' + cmd.test + '\n')
+                connection.exec('' + telnetLogin + '\n' + telnetPassword + '\n' + cmd.test + '\n')
                     .then(function(res) {
                         setTimeout(function() {
                             connection.exec(cmd.show + '\n\n\n')
-                                .then( function(res) {
+                                .then(function(res) {
                                     var reg = new RegExp('Port');
                                     var newRes = res.replace(/\n/g, '<br/>').replace(/\s/g, '&nbsp;');
-                                    newRes = newRes.slice( newRes.search(reg) );
+                                    newRes = newRes.slice(newRes.search(reg));
                                     response.send(newRes);
                                     console.log('response sent');
                                     connection.destroy();
                                     console.log('destroying');
                                 });
-                        }, 6000 );
+                        }, 6000);
                     });
-            };
+            }
+
             connection.on('error', function() {
                 response.send('host unreachable');
                 console.log('host unreachable');
             });
+
             connection.on('timeout', function() {
                 response.send('response timeout');
                 console.log('response timeout');
@@ -384,6 +409,7 @@ app.post('/telnet', function (request, response) {
             break;
     }
 });
+
 app.listen(8000, function () {
-    console.log('server started');
+    console.log('server started: 8000');
 });
